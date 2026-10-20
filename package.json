@@ -1,0 +1,43 @@
+{
+  "name": "retri",
+  "version": "0.1.0",
+  "description": "A rewind button for coding agents: a Pi extension that lets the agent go back to an earlier checkpoint, restoring files and context, with a note.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "pi-package"
+  ],
+  "repository": "github:notHuman9504/retri",
+  "engines": {
+    "node": ">=22"
+  },
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-ai": "1.0.2",
+    "@earendil-works/pi-coding-agent": "1.0.2",
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  },
+  "overrides": {
+    "@earendil-works/chord": "1.0.2",
+    "@earendil-works/pi-agent-core": "1.0.2",
+    "@earendil-works/pi-ai": "$@earendil-works/pi-ai",
+    "@earendil-works/pi-codemode": "1.0.2",
+    "@earendil-works/pi-mcp": "1.0.2",
+    "@earendil-works/pi-telemetry": "1.0.2",
+    "@earendil-works/pi-tui": "1.0.2"
+  }
+}
