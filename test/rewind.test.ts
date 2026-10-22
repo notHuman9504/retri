@@ -1,5 +1,6 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AssistantMessage, Message } from '@earendil-works/pi-ai';
@@ -147,4 +148,21 @@ test('a rewind to a checkpoint that does not exist fails and changes nothing', a
 
 	expect(await readFile(join(workspace, 'app.txt'), 'utf8')).toBe('v2\n');
 	expect(text(sent[2])).toContain('There is no checkpoint 7 to return to');
+});
+
+test('ending the session drops its snapshots', async () => {
+	await writeFile(join(workspace, 'app.txt'), 'v1\n');
+	const { session } = await startPi([bash('echo v2 > app.txt'), fauxAssistantMessage('Done.')]);
+
+	await session.prompt('Update app.txt');
+	const [repo] = await readdir(join(agentDir, 'retri', 'snapshots'));
+	const refs = () =>
+		execFileSync('git', ['--git-dir', join(agentDir, 'retri', 'snapshots', repo), 'for-each-ref']).toString();
+	expect(refs()).not.toBe('');
+
+	await session.extensionRunner.emit({ type: 'session_shutdown', reason: 'quit' });
+	session.dispose();
+
+	expect(refs()).toBe('');
+	expect(await readFile(join(workspace, 'app.txt'), 'utf8')).toBe('v2\n');
 });
