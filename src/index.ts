@@ -20,6 +20,13 @@ export default function retri(pi: ExtensionAPI) {
 		state = new Retri(new Snapshots(ctx.cwd, ctx.sessionManager.getSessionId()));
 	});
 
+	// Checkpoints don't outlive the session, so neither do their snapshots.
+	pi.on('session_shutdown', async () => {
+		const ending = state;
+		state = undefined;
+		await ending?.dispose();
+	});
+
 	// A run begins: checkpoint the workspace and conversation as the prompt finds them.
 	pi.on('turn_start', async (event, ctx) => {
 		const leaf = ctx.sessionManager.getLeafId();

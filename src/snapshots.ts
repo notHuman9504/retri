@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -51,6 +51,20 @@ export class Snapshots {
 		await this.git('read-tree', '-m', '-u', now, tree);
 	}
 
+	/**
+	 * Drops this session's snapshots once it can no longer rewind to them. Objects other sessions still
+	 * refer to are kept, and so are any written in the last hour, which may belong to a snapshot another
+	 * session is taking right now.
+	 */
+	async discard() {
+		if (!this.ready) return; // nothing was ever snapshotted
+		await this.ready;
+		const refs = await this.git('for-each-ref', '--format=delete %(refname)', `refs/retri/${this.session}/`);
+		if (refs) await this.gitWithInput(refs, 'update-ref', '--stdin');
+		await rm(this.indexFile, { force: true });
+		await this.git('prune', '--expire=1.hour.ago');
+	}
+
 	private init() {
 		this.ready ??= (async () => {
 			await mkdir(this.gitDir, { recursive: true });
@@ -61,8 +75,12 @@ export class Snapshots {
 		return this.ready;
 	}
 
-	private async git(...args: string[]) {
-		const { stdout } = await exec(
+	private git(...args: string[]) {
+		return this.gitWithInput('', ...args);
+	}
+
+	private async gitWithInput(input: string, ...args: string[]) {
+		const run = exec(
 			'git',
 			[
 				// The user's git settings must not change what a snapshot holds or run anything.
@@ -75,6 +93,8 @@ export class Snapshots {
 			],
 			{ cwd: this.workspace, env: { ...process.env, GIT_INDEX_FILE: this.indexFile }, maxBuffer: 64 * 1024 * 1024 },
 		);
+		run.child.stdin?.end(input);
+		const { stdout } = await run;
 		return stdout;
 	}
 }

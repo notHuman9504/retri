@@ -47,7 +47,11 @@ Snapshots live in a private git repository under `~/.pi/agent/retri/snapshots/`.
 - **At most 5 rewinds per prompt.**
 - **Checkpoints don't survive a restart.** Resuming a session starts with no checkpoints.
 - **A checkpoint that context compaction has summarised away can't be rewound to.**
-- **Snapshots aren't cleaned up yet.**
+- **Snapshots are deleted when the session ends** (quit, reload, `/new`, `/resume`, `/fork`). Files saved in the last hour are kept a little longer, in case another session is using them. If Pi is killed, its snapshots stay on disk.
+
+## Ideas
+
+[docs/feature-ideas.md](docs/feature-ideas.md) lists features that could come next.
 
 ## Develop
 

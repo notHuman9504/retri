@@ -49,6 +49,13 @@ export class Retri {
 		return n;
 	}
 
+	/** The session is over and its checkpoints can't be used again, so their snapshots go. */
+	async dispose() {
+		this.checkpoints.clear();
+		this.pending = undefined;
+		await this.snapshots.discard();
+	}
+
 	/** Checks a rewind the model asked for. Throwing turns into a failed tool result the model can read. */
 	request(n: number, note: string) {
 		const to = this.checkpoints.get(n);
